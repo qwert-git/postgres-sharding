@@ -37,4 +37,3 @@ CREATE TABLE books (
 	year int not null 
 );
 ```
-

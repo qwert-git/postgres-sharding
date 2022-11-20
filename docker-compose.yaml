@@ -1,6 +1,6 @@
 version: '3.8'
 services:
-  postgres:
+  postgres-b:
     container_name: postgre-main
     image: postgres:15.1
     environment:
@@ -27,8 +27,37 @@ services:
     networks:
       - pg-sharding
 
+  postgres-b1:
+    container_name: postgre-shard-1
+    image: postgres:15.1
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PW}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgre_b1_db:/var/lib/postgresql/data
+    networks:
+      - pg-sharding
+    restart: unless-stopped
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:6.16
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_MAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PW}
+    ports:
+      - "5050:80"
+    networks:
+      - pg-sharding
+
 volumes:
   postgre_db: {}
+  postgre_b1_db: {}
+  postgre_b2_db: {}
 
 networks:
   pg-sharding:
