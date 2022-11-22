@@ -116,3 +116,80 @@ CREATE VIEW v_books AS
 		UNION ALL
 	SELECT * FROM books_2;
 ```
+
+# Performance Testing
+The goal is to compare writting and reading speed between sharded and regular database.
+
+We will create an application which will write down 1M records in seceral threads and measure the time.
+Before this we will create table with wide range sharding values, like 6 tables between 3 servers with the sharding step like 100k.
+
+Target table
+```
+CREATE TABLE simple_data (
+	id bigint not null primary key,
+	raw_data character varying not null,
+	random_value int not null
+);
+```
+
+First shard
+```
+CREATE TABLE simple_data (
+	id bigint not null primary key,
+	raw_data character varying not null,
+	random_value int not null
+		CONSTRAINT random_value_check CHECK (random_value > 100000 and random_value < 200000)
+);
+
+CREATE INDEX simple_data_random_value_idx ON simple_data USING btree(random_value);
+```
+
+And the second shard
+```
+CREATE TABLE simple_data (
+	id bigint not null primary key,
+	raw_data character varying not null,
+	random_value int not null
+		CONSTRAINT random_value_check CHECK (random_value > 200000 and random_value < 300000)
+);
+
+CREATE INDEX simple_data_random_value_idx ON simple_data USING btree(random_value);
+```
+
+Finish with the creating view
+```
+CREATE VIEW v_simple_data AS
+	SELECT * FROM simple_data
+		UNION ALL
+	SELECT * FROM simple_data_1
+		UNION ALL
+	SELECT * FROM simple_data_2;
+```
+
+## Results
+
+### Writting
+3 shardes, range is 100k per shard, writting in 4 threads
+```
+Total time: 2086582 ms, 2086.582 sec, 34.8 min
+Total raws: 1000405
+Main DB rows: 333418
+Shard 1 rows: 333848
+Shard 2 rows: 333139
+```
+
+No shards
+```
+Total time: 1525869 ms, 1525.869 sec, 25.43115 min
+Total raws: 1000000
+```
+
+### Reading
+1000 read for by random values
+```
+With shards
+Avg read time: 57.534ms
+
+No shards
+Avg read time: 98.871ms
+```
