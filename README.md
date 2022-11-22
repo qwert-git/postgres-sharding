@@ -86,6 +86,10 @@ OPTIONS (schema_name 'public', table_name 'books');
 ```
 
 ### Set another shards as many as needed
+In the same way we set up other shards:
+1. Create table with constraint on shard server
+2. Add SERVER and MAPPING to main server
+3. Create foreign table on main server
 
 ### Set rules for the table on the main server
 To stop manage main table
