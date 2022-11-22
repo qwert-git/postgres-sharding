@@ -23,7 +23,9 @@ postgre-main - main server. Make read/write requests to this server;
 posrgre-shard-1 - the first shard server;
 postgre-shard-2 - the second shard server;
 
-## Init database
+## How to
+
+### Init database
 The empty database ShardingDb created with the docker after running.
 
 For test purposes, we will create empty table first and then we will set up sharding for it. 
@@ -38,7 +40,7 @@ CREATE TABLE books (
 );
 ```
 
-## Create the table on the shard server
+### Create the table on the shard server
 ```
 CREATE TABLE books (
 	id bigint not null,
@@ -55,7 +57,7 @@ Then create an index.
 CREATE INDEX books_category_id_idx ON books USING btree(category_id);
 ```
 
-## Add configuration and mapping on the main server
+### Add configuration and mapping on the main server
 Add foreign data wrapper
 ```
 CREATE EXTENSION postgres_fdw;
@@ -71,7 +73,7 @@ SERVER books_1_server
 OPTIONS (user 'postgre', password 'password');
 ```
 
-## Create foreign table on the main server
+### Create foreign table on the main server
 ```
 CREATE FOREIGN TABLE books_1 (
 	id bigint not null,
@@ -83,9 +85,9 @@ SERVER books_1_server
 OPTIONS (schema_name 'public', table_name 'books');
 ```
 
-## Set another shards as many as needed
+### Set another shards as many as needed
 
-## Set rules for the table on the main server
+### Set rules for the table on the main server
 To stop manage main table
 ```
 CREATE RULE books_insert AS ON INSERT TO books DO INSTEAD NOTHING;
@@ -100,7 +102,7 @@ WHERE ( category_id = 1 )
 DO INSTEAD INSERT INTO books_1 VALUES (NEW.*);
 ```
 
-## Insert values to test sharding works
+### Insert values to test sharding works
 ```
 insert into books (id, category_id, author, title, year)
 values (1, 1, 'Donald Trump', 'How to make people love you', '2018');
@@ -109,7 +111,7 @@ insert into books (id, category_id, author, title, year)
 values (1, 2, 'Nick Fury', 'Guid to create best squard', '2022');
 ```
 
-## Create view to select books as no sharding at all
+### Create view to select books as no sharding at all
 ```
 CREATE VIEW v_books AS
 	SELECT * FROM books_1
@@ -117,7 +119,7 @@ CREATE VIEW v_books AS
 	SELECT * FROM books_2;
 ```
 
-# Performance Testing
+# Performance Tests
 The goal is to compare writting and reading speed between sharded and regular database.
 
 We will create an application which will write down 1M records in seceral threads and measure the time.
